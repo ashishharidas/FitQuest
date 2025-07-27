@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 import { pgTable, text, varchar, integer, decimal, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -86,6 +86,50 @@ export const battles = pgTable("battles", {
   boardState: jsonb("board_state").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ one, many }) => ({
+  character: one(characters),
+  quests: many(quests),
+  fitnessData: many(fitnessData),
+  transactions: many(transactions),
+  battles: many(battles),
+}));
+
+export const charactersRelations = relations(characters, ({ one }) => ({
+  user: one(users, {
+    fields: [characters.userId],
+    references: [users.id],
+  }),
+}));
+
+export const questsRelations = relations(quests, ({ one }) => ({
+  user: one(users, {
+    fields: [quests.userId],
+    references: [users.id],
+  }),
+}));
+
+export const fitnessDataRelations = relations(fitnessData, ({ one }) => ({
+  user: one(users, {
+    fields: [fitnessData.userId],
+    references: [users.id],
+  }),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  user: one(users, {
+    fields: [transactions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const battlesRelations = relations(battles, ({ one }) => ({
+  user: one(users, {
+    fields: [battles.userId],
+    references: [users.id],
+  }),
+}));
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });

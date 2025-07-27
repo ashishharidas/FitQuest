@@ -25,7 +25,7 @@ Preferred communication style: Simple, everyday language.
 - **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
 - **Database Provider**: Neon Database (serverless PostgreSQL)
 - **API Design**: RESTful API with Express routes
-- **Storage**: In-memory storage implementation with interface for future database integration
+- **Storage**: PostgreSQL database with Drizzle ORM for persistent data storage
 
 ### Design System
 - **Theme**: Dark cyberpunk/sci-fi aesthetic with neon accents
