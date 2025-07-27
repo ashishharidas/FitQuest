@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, characters, quests, fitnessData, transactions, leaderboard } from "@shared/schema";
+import { users, characters, quests, fitnessData, transactions, leaderboard, storeItems, arenaProgress } from "@shared/schema";
 
 async function seed() {
   try {
@@ -215,6 +215,128 @@ async function seed() {
     }
 
     console.log("✅ Created leaderboard entries:", leaderboardData.length);
+
+    // Create store items
+    const storeItemsData = [
+      {
+        id: "strength-boost-1",
+        name: "Iron Weights",
+        description: "Basic iron weights to build raw strength",
+        statType: "strength",
+        statIncrease: 5,
+        ethCost: "0.01",
+        category: "upgrade",
+        isActive: true,
+      },
+      {
+        id: "strength-boost-2",
+        name: "Titanium Barbell",
+        description: "Advanced titanium equipment for serious strength gains",
+        statType: "strength",
+        statIncrease: 10,
+        ethCost: "0.02",
+        category: "upgrade",
+        isActive: true,
+      },
+      {
+        id: "stamina-boost-1",
+        name: "Endurance Elixir",
+        description: "Mystical potion that enhances cardiovascular endurance",
+        statType: "stamina",
+        statIncrease: 5,
+        ethCost: "0.01",
+        category: "upgrade",
+        isActive: true,
+      },
+      {
+        id: "stamina-boost-2",
+        name: "Marathon Runner's Boots",
+        description: "Legendary boots that boost stamina significantly",
+        statType: "stamina",
+        statIncrease: 10,
+        ethCost: "0.02",
+        category: "upgrade",
+        isActive: true,
+      },
+      {
+        id: "agility-boost-1",
+        name: "Swift Gloves",
+        description: "Lightweight gloves that improve speed and agility",
+        statType: "agility",
+        statIncrease: 5,
+        ethCost: "0.01",
+        category: "upgrade",
+        isActive: true,
+      },
+      {
+        id: "agility-boost-2",
+        name: "Wind Walker Shoes",
+        description: "Enchanted footwear that grants incredible agility",
+        statType: "agility",
+        statIncrease: 10,
+        ethCost: "0.02",
+        category: "upgrade",
+        isActive: true,
+      },
+      {
+        id: "health-boost-1",
+        name: "Healing Herbs",
+        description: "Natural herbs that boost overall health and vitality",
+        statType: "health",
+        statIncrease: 5,
+        ethCost: "0.01",
+        category: "upgrade",
+        isActive: true,
+      },
+      {
+        id: "health-boost-2",
+        name: "Phoenix Feather",
+        description: "Rare feather that provides massive health enhancement",
+        statType: "health",
+        statIncrease: 10,
+        ethCost: "0.02",
+        category: "upgrade",
+        isActive: true,
+      },
+    ];
+
+    for (const item of storeItemsData) {
+      await db
+        .insert(storeItems)
+        .values(item)
+        .onConflictDoNothing();
+    }
+
+    console.log("✅ Created store items:", storeItemsData.length);
+
+    // Create arena progress for users
+    const arenaProgressData = [
+      {
+        userId: "mock-user-id",
+        currentLevel: 3,
+        currentSeries: 1,
+        battlesCompletedToday: 1,
+        totalBattlesWon: 5,
+        lastBattleDate: new Date(),
+      },
+      {
+        userId: "user-1",
+        currentLevel: 7,
+        currentSeries: 2,
+        battlesCompletedToday: 0,
+        totalBattlesWon: 15,
+        lastBattleDate: new Date(Date.now() - 86400000), // Yesterday
+      },
+    ];
+
+    for (const progress of arenaProgressData) {
+      await db
+        .insert(arenaProgress)
+        .values(progress)
+        .onConflictDoNothing();
+    }
+
+    console.log("✅ Created arena progress:", arenaProgressData.length);
 
     console.log("🎉 Database seeded successfully!");
   } catch (error) {

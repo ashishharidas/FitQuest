@@ -284,6 +284,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Store routes
+  app.get("/api/store/items", async (req, res) => {
+    try {
+      const items = await storage.getStoreItems();
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching store items:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/store/purchase", async (req, res) => {
+    try {
+      const { userId, itemId, quantity = 1 } = req.body;
+      
+      // Get the item and character
+      const [item, character] = await Promise.all([
+        storage.getStoreItem(itemId),
+        storage.getCharacter(userId),
+      ]);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      
+      if (!character) {
+        return res.status(404).json({ message: "Character not found" });
+      }
+      
+      const totalCost = parseFloat(item.ethCost) * quantity;
+      const currentBalance = parseFloat(character.ethBalance);
+      
+      if (currentBalance < totalCost) {
+        return res.status(400).json({ message: "Insufficient ETH balance" });
+      }
+      
+      // Create purchase record
+      const purchase = await storage.createPurchase({
+        userId,
+        itemId,
+        quantity,
+        totalCost: totalCost.toString(),
+      });
+      
+      // Update character stats and balance
+      const statUpdates: Partial<Character> = {
+        ethBalance: (currentBalance - totalCost).toString(),
+      };
+      
+      // Apply stat increase with 100 max cap
+      if (item.statType === "strength") {
+        statUpdates.strength = Math.min(100, character.strength + (item.statIncrease * quantity));
+      } else if (item.statType === "stamina") {
+        statUpdates.stamina = Math.min(100, character.stamina + (item.statIncrease * quantity));
+      } else if (item.statType === "agility") {
+        statUpdates.agility = Math.min(100, character.agility + (item.statIncrease * quantity));
+      } else if (item.statType === "health") {
+        statUpdates.health = Math.min(100, character.health + (item.statIncrease * quantity));
+      }
+      
+      await storage.updateCharacter(userId, statUpdates);
+      
+      res.json({ purchase, message: "Purchase successful" });
+    } catch (error) {
+      console.error("Error processing purchase:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Arena routes
+  app.get("/api/arena/progress/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const progress = await storage.getArenaProgress(userId);
+      
+      if (!progress) {
+        // Create initial progress if none exists
+        const newProgress = await storage.createArenaProgress({
+          userId,
+          currentLevel: 1,
+          currentSeries: 1,
+          battlesCompletedToday: 0,
+          totalBattlesWon: 0,
+        });
+        return res.json(newProgress);
+      }
+      
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching arena progress:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/arena/battle", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      const [character, progress] = await Promise.all([
+        storage.getCharacter(userId),
+        storage.getArenaProgress(userId),
+      ]);
+      
+      if (!character || !progress) {
+        return res.status(404).json({ message: "Character or progress not found" });
+      }
+      
+      // Check if user can battle today (max 2 battles per day)
+      const today = new Date().toDateString();
+      const lastBattleDate = progress.lastBattleDate ? new Date(progress.lastBattleDate).toDateString() : null;
+      
+      let battlesCompletedToday = progress.battlesCompletedToday;
+      if (lastBattleDate !== today) {
+        battlesCompletedToday = 0; // Reset for new day
+      }
+      
+      if (battlesCompletedToday >= 2) {
+        return res.status(400).json({ message: "Maximum battles per day reached" });
+      }
+      
+      // Generate enemy based on current level
+      const enemyLevels = [
+        { name: "Shadow Goblin", health: 80, xp: 15 },
+        { name: "Stone Orc", health: 120, xp: 25 },
+        { name: "Fire Demon", health: 160, xp: 35 },
+        { name: "Ice Giant", health: 200, xp: 45 },
+        { name: "Dark Knight", health: 240, xp: 55 },
+        { name: "Ancient Dragon", health: 280, xp: 65 },
+        { name: "Void Lord", health: 320, xp: 75 },
+      ];
+      
+      const enemy = enemyLevels[progress.currentLevel - 1];
+      const heroXP = character.xp;
+      
+      // Battle outcome based on hero XP vs enemy XP
+      const playerWins = heroXP > enemy.xp;
+      
+      let updates: Partial<ArenaProgress> = {
+        battlesCompletedToday: battlesCompletedToday + 1,
+        lastBattleDate: new Date(),
+      };
+      
+      let characterUpdates: Partial<Character> = {};
+      
+      if (playerWins) {
+        updates.totalBattlesWon = progress.totalBattlesWon + 1;
+        
+        // Level progression
+        if (progress.currentLevel < 7) {
+          updates.currentLevel = progress.currentLevel + 1;
+        } else {
+          // New series starts
+          updates.currentLevel = 1;
+          updates.currentSeries = progress.currentSeries + 1;
+        }
+        
+        // Reward XP and ETH
+        const xpReward = 20 + (progress.currentLevel * 5);
+        const ethReward = 0.01 + (progress.currentLevel * 0.005);
+        
+        characterUpdates.xp = character.xp + xpReward;
+        characterUpdates.ethBalance = (parseFloat(character.ethBalance) + ethReward).toString();
+      }
+      
+      // Update progress and character
+      await Promise.all([
+        storage.updateArenaProgress(userId, updates),
+        storage.updateCharacter(userId, characterUpdates),
+      ]);
+      
+      res.json({ 
+        result: playerWins ? "victory" : "defeat",
+        enemy: enemy.name,
+        playerXP: heroXP,
+        enemyXP: enemy.xp,
+        rewards: playerWins ? {
+          xp: 20 + (progress.currentLevel * 5),
+          eth: 0.01 + (progress.currentLevel * 0.005),
+        } : null,
+      });
+    } catch (error) {
+      console.error("Error processing arena battle:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

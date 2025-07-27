@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Home, ScrollText, Swords, Wallet, Trophy, User } from "lucide-react";
+import { Home, ScrollText, Swords, Wallet, Trophy, User, ShoppingBag } from "lucide-react";
 
 interface BottomNavigationProps {
   activeTab: string;
@@ -10,9 +10,9 @@ const tabs = [
   { id: "dashboard", icon: Home, label: "Dashboard" },
   { id: "quests", icon: ScrollText, label: "Quests" },
   { id: "arena", icon: Swords, label: "Arena" },
+  { id: "store", icon: ShoppingBag, label: "Store" },
   { id: "wallet", icon: Wallet, label: "Wallet" },
   { id: "leaderboard", icon: Trophy, label: "Leaderboard" },
-  { id: "profile", icon: User, label: "Profile" },
 ];
 
 export default function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {

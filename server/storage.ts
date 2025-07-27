@@ -8,6 +8,9 @@ import {
   transactions, 
   leaderboard, 
   battles,
+  arenaProgress,
+  storeItems,
+  storePurchases,
   type User, 
   type InsertUser, 
   type Character, 
@@ -20,7 +23,13 @@ import {
   type InsertTransaction, 
   type LeaderboardEntry, 
   type Battle, 
-  type InsertBattle 
+  type InsertBattle,
+  type ArenaProgress,
+  type InsertArenaProgress,
+  type StoreItem,
+  type InsertStoreItem,
+  type StorePurchase,
+  type InsertStorePurchase 
 } from "@shared/schema";
 
 export interface IStorage {
@@ -61,6 +70,18 @@ export interface IStorage {
   getUserBattle(userId: string): Promise<Battle | undefined>;
   createBattle(battle: InsertBattle): Promise<Battle>;
   updateBattle(id: string, updates: Partial<Battle>): Promise<Battle | undefined>;
+
+  // Arena Progress
+  getArenaProgress(userId: string): Promise<ArenaProgress | undefined>;
+  createArenaProgress(progress: InsertArenaProgress): Promise<ArenaProgress>;
+  updateArenaProgress(userId: string, updates: Partial<ArenaProgress>): Promise<ArenaProgress | undefined>;
+
+  // Store
+  getStoreItems(): Promise<StoreItem[]>;
+  getStoreItem(id: string): Promise<StoreItem | undefined>;
+  createStoreItem(item: InsertStoreItem): Promise<StoreItem>;
+  getUserPurchases(userId: string): Promise<StorePurchase[]>;
+  createPurchase(purchase: InsertStorePurchase): Promise<StorePurchase>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -232,6 +253,57 @@ export class DatabaseStorage implements IStorage {
       .where(eq(battles.id, id))
       .returning();
     return battle || undefined;
+  }
+
+  async getArenaProgress(userId: string): Promise<ArenaProgress | undefined> {
+    const [progress] = await db.select().from(arenaProgress).where(eq(arenaProgress.userId, userId));
+    return progress || undefined;
+  }
+
+  async createArenaProgress(insertProgress: InsertArenaProgress): Promise<ArenaProgress> {
+    const [progress] = await db
+      .insert(arenaProgress)
+      .values(insertProgress)
+      .returning();
+    return progress;
+  }
+
+  async updateArenaProgress(userId: string, updates: Partial<ArenaProgress>): Promise<ArenaProgress | undefined> {
+    const [progress] = await db
+      .update(arenaProgress)
+      .set(updates)
+      .where(eq(arenaProgress.userId, userId))
+      .returning();
+    return progress || undefined;
+  }
+
+  async getStoreItems(): Promise<StoreItem[]> {
+    return await db.select().from(storeItems).where(eq(storeItems.isActive, true));
+  }
+
+  async getStoreItem(id: string): Promise<StoreItem | undefined> {
+    const [item] = await db.select().from(storeItems).where(eq(storeItems.id, id));
+    return item || undefined;
+  }
+
+  async createStoreItem(insertItem: InsertStoreItem): Promise<StoreItem> {
+    const [item] = await db
+      .insert(storeItems)
+      .values(insertItem)
+      .returning();
+    return item;
+  }
+
+  async getUserPurchases(userId: string): Promise<StorePurchase[]> {
+    return await db.select().from(storePurchases).where(eq(storePurchases.userId, userId));
+  }
+
+  async createPurchase(insertPurchase: InsertStorePurchase): Promise<StorePurchase> {
+    const [purchase] = await db
+      .insert(storePurchases)
+      .values(insertPurchase)
+      .returning();
+    return purchase;
   }
 }
 

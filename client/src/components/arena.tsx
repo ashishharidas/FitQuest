@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Zap, User, Skull, Swords, Trophy, Crown, Coins, Calendar } from "lucide-react";
+import { Shield, Zap, User, Skull, Swords, Trophy, Crown, Coins, Calendar, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,7 @@ const ENEMY_LEVELS = [
   { name: "Void Lord", health: 320, xp: 75, description: "The ultimate master of destruction", color: "from-black to-gray-900" },
 ];
 
-export default function BattleArena() {
+export function Arena() {
   const { toast } = useToast();
   const [battleInProgress, setBattleInProgress] = useState(false);
   const [battleResult, setBattleResult] = useState<BattleResult | null>(null);

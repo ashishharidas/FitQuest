@@ -7,6 +7,7 @@ import BattleArena from "@/components/battle-arena";
 import WalletPanel from "@/components/wallet-panel";
 import Leaderboard from "@/components/leaderboard";
 import ProfileView from "@/components/profile-view";
+import { Store } from "@/components/store";
 import BottomNavigation from "@/components/bottom-navigation";
 import { useQuery } from "@tanstack/react-query";
 import type { User, Character, Quest, FitnessData, Transaction, LeaderboardEntry } from "@shared/schema";
@@ -116,6 +117,18 @@ export default function Dashboard() {
             transition={{ duration: 0.3 }}
           >
             <ProfileView />
+          </motion.div>
+        );
+      case "store":
+        return (
+          <motion.div
+            key="store"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Store />
           </motion.div>
         );
       default:
