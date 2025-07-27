@@ -68,7 +68,7 @@ export default function FitnessStats() {
         <div className="flex justify-between">
           {weekDays.map((day, index) => (
             <motion.div 
-              key={day}
+              key={`day-${index}-${day}`}
               className="text-center"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}

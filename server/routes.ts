@@ -180,9 +180,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const quest of activeQuests) {
         let progressValue = 0;
         if (quest.name.includes("Steps") || quest.name.includes("steps")) {
-          progressValue = fitnessData.steps;
+          progressValue = fitnessData.steps || 0;
         } else if (quest.name.includes("Calorie") || quest.name.includes("calories")) {
-          progressValue = fitnessData.calories;
+          progressValue = fitnessData.calories || 0;
         }
         
         if (progressValue > 0) {

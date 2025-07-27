@@ -55,8 +55,8 @@ export class MemStorage implements IStorage {
   }
 
   private initializeMockData() {
-    // Create sample user
-    const userId = randomUUID();
+    // Create sample user with fixed ID
+    const userId = "mock-user-id";
     const user: User = {
       id: userId,
       username: "AlexWarrior",
@@ -82,10 +82,14 @@ export class MemStorage implements IStorage {
     };
     this.characters.set(userId, character);
 
-    // Create sample quests
+    // Create sample quests with fixed IDs for consistency
+    const quest1Id = "quest-steps-1";
+    const quest2Id = "quest-calories-1";  
+    const quest3Id = "quest-marathon-1";
+    
     const quests: Quest[] = [
       {
-        id: randomUUID(),
+        id: quest1Id,
         userId,
         type: "daily",
         name: "10,000 Steps Journey",
@@ -100,7 +104,7 @@ export class MemStorage implements IStorage {
         createdAt: new Date(),
       },
       {
-        id: randomUUID(),
+        id: quest2Id,
         userId,
         type: "daily",
         name: "Calorie Crusher",
@@ -115,7 +119,7 @@ export class MemStorage implements IStorage {
         createdAt: new Date(),
       },
       {
-        id: randomUUID(),
+        id: quest3Id,
         userId,
         type: "weekly",
         name: "Marathon Master",
@@ -223,7 +227,12 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id, createdAt: new Date() };
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      createdAt: new Date(),
+      walletAddress: insertUser.walletAddress || null
+    };
     this.users.set(id, user);
     return user;
   }
@@ -242,7 +251,19 @@ export class MemStorage implements IStorage {
 
   async createCharacter(insertCharacter: InsertCharacter): Promise<Character> {
     const id = randomUUID();
-    const character: Character = { ...insertCharacter, id };
+    const character: Character = { 
+      ...insertCharacter, 
+      id,
+      name: insertCharacter.name || "Athlos",
+      level: insertCharacter.level || 1,
+      xp: insertCharacter.xp || 0,
+      evolutionStage: insertCharacter.evolutionStage || 1,
+      strength: insertCharacter.strength || 100,
+      stamina: insertCharacter.stamina || 100,
+      agility: insertCharacter.agility || 100,
+      health: insertCharacter.health || 100,
+      equipment: insertCharacter.equipment || {}
+    };
     this.characters.set(insertCharacter.userId, character);
     return character;
   }
@@ -265,7 +286,15 @@ export class MemStorage implements IStorage {
 
   async createQuest(insertQuest: InsertQuest): Promise<Quest> {
     const id = randomUUID();
-    const quest: Quest = { ...insertQuest, id, createdAt: new Date() };
+    const quest: Quest = { 
+      ...insertQuest, 
+      id, 
+      createdAt: new Date(),
+      currentValue: insertQuest.currentValue || 0,
+      completed: insertQuest.completed || false,
+      claimed: insertQuest.claimed || false,
+      expiresAt: insertQuest.expiresAt || null
+    };
     this.quests.set(id, quest);
     return quest;
   }
@@ -296,7 +325,17 @@ export class MemStorage implements IStorage {
 
   async createFitnessData(insertData: InsertFitnessData): Promise<FitnessData> {
     const id = randomUUID();
-    const data: FitnessData = { ...insertData, id, date: new Date() };
+    const data: FitnessData = { 
+      ...insertData, 
+      id, 
+      date: new Date(),
+      steps: insertData.steps || 0,
+      calories: insertData.calories || 0,
+      heartRate: insertData.heartRate || 70,
+      activeMinutes: insertData.activeMinutes || 0,
+      distance: insertData.distance || "0",
+      workoutType: insertData.workoutType || null
+    };
     const userFitnessData = this.fitnessData.get(insertData.userId) || [];
     userFitnessData.push(data);
     this.fitnessData.set(insertData.userId, userFitnessData);
@@ -322,7 +361,13 @@ export class MemStorage implements IStorage {
 
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
     const id = randomUUID();
-    const transaction: Transaction = { ...insertTransaction, id, createdAt: new Date() };
+    const transaction: Transaction = { 
+      ...insertTransaction, 
+      id, 
+      createdAt: new Date(),
+      status: insertTransaction.status || "pending",
+      txHash: insertTransaction.txHash || null
+    };
     const userTransactions = this.transactions.get(insertTransaction.userId) || [];
     userTransactions.push(transaction);
     this.transactions.set(insertTransaction.userId, userTransactions);
@@ -330,8 +375,8 @@ export class MemStorage implements IStorage {
   }
 
   async updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction | undefined> {
-    for (const [userId, userTransactions] of this.transactions.entries()) {
-      const transactionIndex = userTransactions.findIndex(t => t.id === id);
+    for (const [userId, userTransactions] of Array.from(this.transactions.entries())) {
+      const transactionIndex = userTransactions.findIndex((t: Transaction) => t.id === id);
       if (transactionIndex !== -1) {
         const updatedTransaction = { ...userTransactions[transactionIndex], ...updates };
         userTransactions[transactionIndex] = updatedTransaction;
@@ -362,13 +407,18 @@ export class MemStorage implements IStorage {
 
   async createBattle(insertBattle: InsertBattle): Promise<Battle> {
     const id = randomUUID();
-    const battle: Battle = { ...insertBattle, id, createdAt: new Date() };
+    const battle: Battle = { 
+      ...insertBattle, 
+      id, 
+      createdAt: new Date(),
+      status: insertBattle.status || "active"
+    };
     this.battles.set(insertBattle.userId, battle);
     return battle;
   }
 
   async updateBattle(id: string, updates: Partial<Battle>): Promise<Battle | undefined> {
-    for (const [userId, battle] of this.battles.entries()) {
+    for (const [userId, battle] of Array.from(this.battles.entries())) {
       if (battle.id === id) {
         const updatedBattle = { ...battle, ...updates };
         this.battles.set(userId, updatedBattle);

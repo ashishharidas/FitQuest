@@ -24,12 +24,10 @@ export default function Dashboard() {
 
   const { data: character } = useQuery<Character>({
     queryKey: ["/api/character", userId],
-    enabled: false, // Disabled for demo, using mock data
   });
 
   const { data: quests } = useQuery<Quest[]>({
     queryKey: ["/api/quests", userId],
-    enabled: false, // Disabled for demo, using mock data
   });
 
   const { data: fitnessData } = useQuery<FitnessData[]>({
@@ -39,12 +37,10 @@ export default function Dashboard() {
 
   const { data: transactions } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions", userId],
-    enabled: false, // Disabled for demo, using mock data
   });
 
   const { data: leaderboard } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/leaderboard"],
-    enabled: false, // Disabled for demo, using mock data
   });
 
   const renderTabContent = () => {
